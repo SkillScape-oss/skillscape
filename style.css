@@ -114,10 +114,9 @@ body, html {
 
 .xp-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 12px;
+  flex-direction: column; /* Stacks title on top, value on bottom */
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .xp-title {
