@@ -31,7 +31,7 @@
       gap: 20px;
     }
 
-    /* Top Stats Card */
+    /* Header Stats */
     .stats-card {
       display: flex;
       align-items: center;
@@ -75,7 +75,6 @@
       min-width: 140px;
     }
 
-    /* XP Header without "EXPERIENCE" label */
     .xp-header {
       display: flex;
       justify-content: flex-end;
@@ -106,12 +105,12 @@
       transition: width 0.3s ease;
     }
 
-    /* Map & Floating Nodes Container */
+    /* Map & Skill Tree Stack */
     .map-container {
       position: relative;
       width: 100%;
       max-width: 800px;
-      height: 480px;
+      height: 500px;
       background: #090d13;
       border: 1px solid var(--border-color);
       border-radius: 16px;
@@ -119,7 +118,28 @@
       box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
     }
 
-    /* Floating Skill Node */
+    /* Original Canvas Skill Tree background */
+    #tree-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Floating Interactive Overlay Layer */
+    .nodes-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none; /* Allows canvas clicks through empty space */
+    }
+
+    /* Floating Skill Card */
     .floating-skill {
       position: absolute;
       display: flex;
@@ -127,6 +147,7 @@
       align-items: center;
       gap: 6px;
       cursor: pointer;
+      pointer-events: auto; /* Keeps individual nodes clickable */
       user-select: none;
       animation: floatNode 4s ease-in-out infinite;
       animation-delay: var(--float-delay, 0s);
@@ -140,48 +161,41 @@
     }
 
     .skill-icon {
-      width: 52px;
-      height: 52px;
+      width: 50px;
+      height: 50px;
       border-radius: 14px;
       background: var(--card-bg);
       border: 2px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     .floating-skill.unlocked .skill-icon {
       border-color: var(--accent-gold);
-      background: rgba(241, 224, 90, 0.1);
+      background: rgba(241, 224, 90, 0.15);
     }
 
     .skill-label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: #c9d1d9;
       white-space: nowrap;
       pointer-events: none;
     }
 
-    /* Dynamic Float Animation */
     @keyframes floatNode {
-      0% {
-        transform: translateY(0px);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-      100% {
-        transform: translateY(0px);
-      }
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0px); }
     }
   </style>
 </head>
 <body>
 
-  <!-- Stats Header -->
+  <!-- Stats Display -->
   <div class="stats-card">
     <div class="level-badge">
       <span class="label">LEVEL</span>
@@ -198,84 +212,123 @@
     </div>
   </div>
 
-  <!-- Skill Map Canvas Container -->
-  <div class="map-container" id="map-container">
-    <!-- Floating Skill Nodes dynamically rendered here -->
+  <!-- Skill Tree Canvas + Overlay Stack -->
+  <div class="map-container">
+    <canvas id="tree-canvas"></canvas>
+    <div class="nodes-layer" id="nodes-layer"></div>
   </div>
 
   <script>
-    // State management
+    // System State
     const state = {
       level: 1,
       xp: 0,
       maxXp: 100
     };
 
+    // Tree Node Network Definition
+    const skillTree = [
+      { id: 'root', name: 'Novice Core', icon: '⚔️', x: 50, y: 80, connections: ['fire', 'shield'], unlocked: true },
+      { id: 'fire', name: 'Fireball', icon: '🔥', x: 30, y: 50, connections: ['lightning'], unlocked: false },
+      { id: 'shield', name: 'Iron Guard', icon: '🛡️', x: 70, y: 50, connections: ['heal'], unlocked: false },
+      { id: 'lightning', name: 'Thunder Bolt', icon: '⚡', x: 20, y: 20, connections: [], unlocked: false },
+      { id: 'heal', name: 'Aura Heal', icon: '✨', x: 80, y: 20, connections: [], unlocked: false }
+    ];
+
     // DOM Elements
     const levelDisplay = document.getElementById('level-display');
     const xpDisplay = document.getElementById('xp-display');
     const xpBarFill = document.getElementById('xp-bar-fill');
-    const mapContainer = document.getElementById('map-container');
+    const canvas = document.getElementById('tree-canvas');
+    const ctx = canvas.getContext('2d');
+    const nodesLayer = document.getElementById('nodes-layer');
 
-    // Skill Tree Data
-    const skills = [
-      { id: 'fire', name: 'Fireball', icon: '🔥', x: 20, y: 30, xpReward: 35, unlocked: false },
-      { id: 'lightning', name: 'Lightning Strike', icon: '⚡', x: 50, y: 20, xpReward: 40, unlocked: false },
-      { id: 'shield', name: 'Iron Defense', icon: '🛡️', x: 80, y: 35, xpReward: 30, unlocked: false },
-      { id: 'heal', name: 'Healing Aura', icon: '✨', x: 35, y: 65, xpReward: 50, unlocked: false },
-      { id: 'stealth', name: 'Shadow Step', icon: '🥷', x: 65, y: 70, xpReward: 45, unlocked: false }
-    ];
+    // Canvas Size Management
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      drawConnections();
+    }
 
-    // Update UI Stats Display
+    // Draw tree connections on canvas
+    function drawConnections() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      skillTree.forEach(node => {
+        const startX = (node.x / 100) * canvas.width;
+        const startY = (node.y / 100) * canvas.height;
+
+        node.connections.forEach(targetId => {
+          const targetNode = skillTree.find(n => n.id === targetId);
+          if (!targetNode) return;
+
+          const endX = (targetNode.x / 100) * canvas.width;
+          const endY = (targetNode.y / 100) * canvas.height;
+
+          // Connection Line Style
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = (node.unlocked && targetNode.unlocked) ? '#f1e05a' : '#30363d';
+          ctx.stroke();
+        });
+      });
+    }
+
+    // Update Stats Card
     function updateStats() {
       levelDisplay.innerText = state.level;
       xpDisplay.innerText = `${state.xp} / ${state.maxXp} XP`;
-      const fillPercentage = (state.xp / state.maxXp) * 100;
-      xpBarFill.style.width = `${fillPercentage}%`;
+      const pct = (state.xp / state.maxXp) * 100;
+      xpBarFill.style.width = `${pct}%`;
     }
 
-    // Add XP and trigger Level Up if needed
     function gainXp(amount) {
       state.xp += amount;
       if (state.xp >= state.maxXp) {
         state.xp -= state.maxXp;
         state.level += 1;
-        state.maxXp = Math.round(state.maxXp * 1.2);
+        state.maxXp = Math.round(state.maxXp * 1.25);
       }
       updateStats();
     }
 
-    // Render Floating Skills on the Map
-    function renderFloatingSkills() {
-      mapContainer.innerHTML = ''; // Clear existing
+    // Render Floating HTML Nodes linked to original tree
+    function renderNodes() {
+      nodesLayer.innerHTML = '';
 
-      skills.forEach((skill, index) => {
-        const node = document.createElement('div');
-        node.className = `floating-skill ${skill.unlocked ? 'unlocked' : ''}`;
-        node.style.left = `${skill.x}%`;
-        node.style.top = `${skill.y}%`;
-        node.style.setProperty('--float-delay', `${(index * 0.7).toFixed(1)}s`);
+      skillTree.forEach((node, idx) => {
+        const elem = document.createElement('div');
+        elem.className = `floating-skill ${node.unlocked ? 'unlocked' : ''}`;
+        elem.style.left = `calc(${node.x}% - 25px)`;
+        elem.style.top = `calc(${node.y}% - 25px)`;
+        elem.style.setProperty('--float-delay', `${(idx * 0.6).toFixed(1)}s`);
 
-        node.innerHTML = `
-          <div class="skill-icon">${skill.icon}</div>
-          <span class="skill-label">${skill.name}</span>
+        elem.innerHTML = `
+          <div class="skill-icon">${node.icon}</div>
+          <span class="skill-label">${node.name}</span>
         `;
 
-        node.addEventListener('click', () => {
-          if (!skill.unlocked) {
-            skill.unlocked = true;
-            node.classList.add('unlocked');
-            gainXp(skill.xpReward);
+        elem.addEventListener('click', () => {
+          if (!node.unlocked) {
+            node.unlocked = true;
+            gainXp(35);
+            renderNodes();
+            drawConnections();
           }
         });
 
-        mapContainer.appendChild(node);
+        nodesLayer.appendChild(elem);
       });
     }
 
     // Initialize
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
     updateStats();
-    renderFloatingSkills();
+    renderNodes();
   </script>
 </body>
 </html>
