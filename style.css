@@ -108,10 +108,9 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 170px; /* Ensures space so EXPERIENCE and 0 / 100 XP sit far apart */
+  min-width: 170px; /* Prevents text crowding */
 }
 
-/* Header flex alignment */
 .xp-header {
   display: flex;
   justify-content: space-between;
@@ -120,7 +119,6 @@ body, html {
   gap: 12px;
 }
 
-/* Title styling */
 .xp-title {
   color: var(--text-muted);
   white-space: nowrap !important;
@@ -130,11 +128,10 @@ body, html {
   letter-spacing: 0.5px;
 }
 
-/* Value styling (Targeting .xp-value) */
 .xp-value {
   color: var(--accent-gold);
-  white-space: nowrap !important; /* Forces "0 / 100 XP" to stay on a single line */
-  flex-shrink: 0;                /* Stops flexbox from squeezing the text width */
+  white-space: nowrap !important; /* Locks "0 / 100 XP" onto 1 line */
+  flex-shrink: 0;                /* Stops flexbox from squeezing width */
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.5px;
