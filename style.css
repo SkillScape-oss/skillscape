@@ -103,24 +103,42 @@ body, html {
 }
 
 /* The container holding both the label and value */
+/* Container spacing */
+.xp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px; /* Ensures space so EXPERIENCE and 0 / 100 XP sit far apart */
+}
+
+/* Header flex alignment */
 .xp-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline; /* Keeps text baseline aligned */
+  align-items: center;
   width: 100%;
-  gap: 12px; /* Enforces spacing between title and value */
+  gap: 12px;
 }
 
-/* Label text ("EXPERIENCE") */
+/* Title styling */
 .xp-title {
-  white-space: nowrap;
+  color: var(--text-muted);
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-/* Value text ("25 / 100 XP") */
+/* Value styling (Targeting .xp-value) */
 .xp-value {
-  white-space: nowrap; /* Stops "XP" from dropping to line 2 */
-  display: inline-flex;
-  gap: 4px; /* Keeps space between "100" and "XP" */
+  color: var(--accent-gold);
+  white-space: nowrap !important; /* Forces "0 / 100 XP" to stay on a single line */
+  flex-shrink: 0;                /* Stops flexbox from squeezing the text width */
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: right;
 }
 
 
