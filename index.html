@@ -3,37 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skillscape - Interactive Constellation</title>
+  <title>Constellation Skill Tree</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <!-- Main Interactive Canvas -->
-    <canvas id="skill-canvas"></canvas>
 
-    <!-- Top Overlay Header -->
-    <header id="ui-header">
-      <div class="logo">SKILLSCAPE</div>
-      <div class="stats">
-        <span id="level-display">LVL 1</span>
-        <span id="xp-display">XP: 0 / 100</span>
+  <!-- Top UI Bar -->
+  <header id="header">
+    <div class="stats">
+      <span id="level-display">LVL 1</span>
+      <span id="xp-display">XP: 0 / 100</span>
+    </div>
+
+    <!-- Search & Category Filters -->
+    <div class="controls-overlay">
+      <input type="text" id="search-input" placeholder="Search skills..." autocomplete="off">
+      <div class="filter-chips">
+        <button class="chip active" data-category="ALL">All</button>
+        <button class="chip" data-category="Fitness">Fitness</button>
+        <button class="chip" data-category="Craft">Craft</button>
+        <button class="chip" data-category="Mindset">Mindset</button>
+        <button class="chip" data-category="Art">Art</button>
+        <button class="chip" data-category="Habits">Habits</button>
+        <button class="chip" data-category="Hybrid">Hybrid</button>
       </div>
-    </header>
+    </div>
 
-    <!-- Side Inspector Panel -->
-    <aside id="inspector" class="hidden">
-      <button id="close-inspector">&times;</button>
-      <h2 id="node-title">Node Name</h2>
-      <p id="node-category" class="badge">Category</p>
-      <p id="node-desc">Node description will appear here.</p>
+    <button id="reset-btn" class="danger-btn">Reset Progress</button>
+  </header>
+
+  <!-- Interactive Canvas -->
+  <canvas id="skill-canvas"></canvas>
+
+  <!-- Node Inspector Panel -->
+  <aside id="inspector" class="hidden">
+    <button id="close-inspector">&times;</button>
+    <div class="inspector-content">
+      <span id="node-category" class="badge">Category</span>
+      <h2 id="node-title">Node Title</h2>
+      <p id="node-desc">Node description will appear here when clicked.</p>
       
       <div class="progress-bar-container">
         <div id="node-progress" class="progress-bar"></div>
       </div>
-      
-      <button id="unlock-btn" class="btn-primary">Unlock Skill (+25 XP)</button>
-    </aside>
-  </div>
+
+      <button id="unlock-btn" class="action-btn">Unlock Skill (+25 XP)</button>
+    </div>
+  </aside>
 
   <script src="script.js"></script>
 </body>

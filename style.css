@@ -1,13 +1,3 @@
-:root {
-  --bg-color: #060913;
-  --panel-bg: rgba(13, 18, 36, 0.85);
-  --accent-cyan: #00f3ff;
-  --accent-gold: #ffb700;
-  --text-main: #f0f4f8;
-  --text-muted: #8a99ad;
-  --border-color: rgba(0, 243, 255, 0.2);
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -15,118 +5,197 @@
   user-select: none;
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+body, html {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  height: 100vh;
-  width: 100vw;
+  background-color: #080b14;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #ffffff;
 }
 
-#app {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-canvas {
+#skill-canvas {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   cursor: grab;
 }
 
-canvas:active {
+#skill-canvas:active {
   cursor: grabbing;
 }
 
-/* Header UI Overlay */
-#ui-header {
+/* Header & Controls Overlay */
+#header {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
+  top: 16px;
+  left: 16px;
+  right: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   pointer-events: none;
+  z-index: 10;
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 4px;
-  color: var(--accent-cyan);
-  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+#header > * {
+  pointer-events: auto;
 }
 
 .stats {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
   display: flex;
-  gap: 15px;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
 }
 
 #level-display {
-  color: var(--accent-gold);
+  color: #00f3ff;
 }
 
-/* Inspector Side Panel */
+#xp-display {
+  color: #ffb700;
+}
+
+.controls-overlay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#search-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  outline: none;
+  font-size: 0.85rem;
+  width: 150px;
+  transition: width 0.2s ease, border-color 0.2s ease;
+}
+
+#search-input:focus {
+  width: 200px;
+  border-color: #00f3ff;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.chip.active {
+  background: #00f3ff;
+  color: #080b14;
+  border-color: #00f3ff;
+  font-weight: 600;
+}
+
+.danger-btn {
+  background: rgba(255, 77, 77, 0.15);
+  border: 1px solid rgba(255, 77, 77, 0.4);
+  color: #ff4d4d;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+  background: rgba(255, 77, 77, 0.3);
+  border-color: #ff4d4d;
+  box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+}
+
+/* Inspector Panel */
 #inspector {
   position: absolute;
   right: 20px;
-  top: 80px;
+  bottom: 20px;
   width: 300px;
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 20px;
-  backdrop-filter: blur(12px);
+  z-index: 10;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 #inspector.hidden {
-  transform: translateX(340px);
+  transform: translateY(20px);
   opacity: 0;
   pointer-events: none;
 }
 
 #close-inspector {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 12px;
+  right: 16px;
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 1.5rem;
   cursor: pointer;
 }
 
-#node-title {
-  font-size: 1.25rem;
-  margin-bottom: 6px;
+#close-inspector:hover {
+  color: #fff;
 }
 
 .badge {
   display: inline-block;
-  font-size: 0.75rem;
-  color: var(--accent-cyan);
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 12px;
+  background: rgba(0, 243, 255, 0.15);
+  color: #00f3ff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+#node-title {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
 }
 
 #node-desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.4;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .progress-bar-container {
@@ -135,31 +204,35 @@ canvas:active {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .progress-bar {
-  height: 100%;
   width: 0%;
-  background: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
+  height: 100%;
+  background: #00f3ff;
   transition: width 0.3s ease;
 }
 
-.btn-primary {
+.action-btn {
   width: 100%;
   padding: 10px;
-  background: transparent;
-  border: 1px solid var(--accent-cyan);
-  color: var(--accent-cyan);
-  font-weight: 600;
+  background: #00f3ff;
+  border: none;
   border-radius: 6px;
+  color: #080b14;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
-.btn-primary:hover {
-  background: var(--accent-cyan);
-  color: var(--bg-color);
-  box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+.action-btn:hover:not(:disabled) {
+  background: #33f6ff;
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
 }

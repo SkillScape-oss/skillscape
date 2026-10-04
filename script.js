@@ -11,22 +11,79 @@ const unlockBtn = document.getElementById('unlock-btn');
 const nodeProgress = document.getElementById('node-progress');
 const levelDisplay = document.getElementById('level-display');
 const xpDisplay = document.getElementById('xp-display');
+const resetBtn = document.getElementById('reset-btn');
 
-// User Progress State
-let userState = {
+// Search & Filter UI Elements
+const searchInput = document.getElementById('search-input');
+const filterChips = document.querySelectorAll('.chip');
+
+// Storage Key & Default State
+const STORAGE_KEY = 'constellation_skill_tree_save';
+
+const defaultState = {
   xp: 0,
   level: 1,
   unlockedNodes: ['core']
 };
 
-// Camera & Drag State
+// User State (Loaded from LocalStorage)
+let userState = loadState();
+
+// Active Search/Filter Query State
+let searchQuery = '';
+let activeCategory = 'ALL';
+
+// Save & Load Functions
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
+  } catch (e) {
+    console.error('Failed to save state to LocalStorage:', e);
+  }
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        xp: typeof parsed.xp === 'number' ? parsed.xp : defaultState.xp,
+        level: typeof parsed.level === 'number' ? parsed.level : defaultState.level,
+        unlockedNodes: Array.isArray(parsed.unlockedNodes) ? parsed.unlockedNodes : defaultState.unlockedNodes
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load state from LocalStorage:', e);
+  }
+  return { ...defaultState };
+}
+
+// Camera & Interaction State
 let camera = { x: 0, y: 0, zoom: 1 };
 let isDragging = false;
 let startPan = { x: 0, y: 0 };
 let dragDistance = 0;
 let selectedNode = null;
 
-// Clean Non-Overlapping Node Topology
+// Ambient Starfield Particles
+const particles = [];
+const PARTICLE_COUNT = 120;
+
+function initParticles() {
+  particles.length = 0;
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push({
+      x: (Math.random() - 0.5) * 3000,
+      y: (Math.random() - 0.5) * 3000,
+      size: Math.random() * 1.5 + 0.5,
+      alpha: Math.random() * 0.7 + 0.2,
+      pulseSpeed: Math.random() * 0.02 + 0.005
+    });
+  }
+}
+
+// Clean Non-Overlapping Skill Nodes
 const nodes = [
   { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your sky.', radius: 0, angle: 0, magnitude: 18 },
 
@@ -37,7 +94,7 @@ const nodes = [
   { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 140, angle: 216, magnitude: 14 },
   { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 140, angle: 288, magnitude: 14 },
 
-  // Ring 2: Sub-skills (Angled so adjacent sectors stay clear)
+  // Ring 2: Sub-skills
   { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 240, angle: -15, magnitude: 11 },
   { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 270, angle: 15, magnitude: 10 },
 
@@ -53,7 +110,7 @@ const nodes = [
   { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 240, angle: 273, magnitude: 11 },
   { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 275, angle: 303, magnitude: 10 },
 
-  // Hybrids: Positioned in open spaces between parents
+  // Hybrids
   { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Focus.', radius: 340, angle: 108, magnitude: 12 },
   { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 340, angle: -45, magnitude: 12 }
 ];
@@ -78,18 +135,16 @@ const connections = [
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  // Hybrid connections (Adjacent endpoints only — no sector cross-overs)
+  // Hybrid connections
   { from: 'code_2b', to: 'hyb_game_dev' },
   { from: 'mind_2a', to: 'hyb_game_dev' },
   { from: 'fit_2a', to: 'hyb_biohack' },
   { from: 'life_2b', to: 'hyb_biohack' }
 ];
 
-// Resize canvas pixel dimensions to match display window
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  draw();
 }
 window.addEventListener('resize', resizeCanvas);
 
@@ -101,15 +156,35 @@ function getNodePosition(node) {
   };
 }
 
-// Draw Function
-function draw() {
+function isNodeMatchingSearch(node) {
+  const matchesCategory = activeCategory === 'ALL' || node.category.toLowerCase() === activeCategory.toLowerCase();
+  const matchesSearch = !searchQuery || node.name.toLowerCase().includes(searchQuery) || node.category.toLowerCase().includes(searchQuery);
+  return matchesCategory && matchesSearch;
+}
+
+function updateUI() {
+  levelDisplay.innerText = `LVL ${userState.level}`;
+  xpDisplay.innerText = `XP: ${userState.xp} / 100`;
+}
+
+// Render Loop
+function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
   ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
   ctx.scale(camera.zoom, camera.zoom);
 
-  // Draw Connections
+  // 1. Draw Starfield Background Dust
+  particles.forEach(p => {
+    p.alpha += Math.sin(Date.now() * 0.001 + p.x) * p.pulseSpeed * 0.05;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(0.8, p.alpha))})`;
+    ctx.fill();
+  });
+
+  // 2. Draw Connections
   connections.forEach(conn => {
     const parent = nodes.find(n => n.id === conn.from);
     const child = nodes.find(n => n.id === conn.to);
@@ -119,53 +194,75 @@ function draw() {
       const cPos = getNodePosition(child);
 
       const isConnectedUnlocked = userState.unlockedNodes.includes(parent.id) && userState.unlockedNodes.includes(child.id);
+      const isFilteredOut = !isNodeMatchingSearch(parent) && !isNodeMatchingSearch(child);
 
       ctx.beginPath();
       ctx.moveTo(pPos.x, pPos.y);
       ctx.lineTo(cPos.x, cPos.y);
 
-      ctx.strokeStyle = isConnectedUnlocked ? '#00f3ff' : 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = isConnectedUnlocked ? 2 : 1;
+      if (isFilteredOut) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.lineWidth = 1;
+      } else {
+        ctx.strokeStyle = isConnectedUnlocked ? '#00f3ff' : 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = isConnectedUnlocked ? 2 : 1;
+      }
       ctx.stroke();
     }
   });
 
-  // Draw Nodes
+  // 3. Draw Nodes
   nodes.forEach(node => {
     const pos = getNodePosition(node);
     const isSelected = selectedNode && selectedNode.id === node.id;
     const isUnlocked = userState.unlockedNodes.includes(node.id);
+    const matchesFilter = isNodeMatchingSearch(node);
 
     const radius = node.magnitude || 10;
 
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
 
-    if (isUnlocked) {
-      ctx.fillStyle = node.category === 'Hybrid' ? '#ffb700' : '#00f3ff';
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = ctx.fillStyle;
+    if (matchesFilter) {
+      if (isUnlocked) {
+        ctx.fillStyle = node.category === 'Hybrid' ? '#ffb700' : '#00f3ff';
+        ctx.shadowBlur = isSelected ? 20 : 12;
+        ctx.shadowColor = ctx.fillStyle;
+      } else {
+        ctx.fillStyle = '#11172a';
+        ctx.shadowBlur = 0;
+      }
+      ctx.lineWidth = isSelected ? 3 : 1.5;
+      ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#2e3856');
     } else {
-      ctx.fillStyle = '#11172a';
+      // Dimmed state for filtered out nodes
+      ctx.fillStyle = 'rgba(17, 23, 42, 0.3)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
       ctx.shadowBlur = 0;
     }
 
     ctx.fill();
-    ctx.lineWidth = isSelected ? 3 : 1.5;
-    ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#2e3856');
     ctx.stroke();
 
+    // Node Label
     ctx.shadowBlur = 0;
-    ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
+    if (matchesFilter) {
+      ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.6)';
+    } else {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    }
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(node.name, pos.x, pos.y + radius + 14);
   });
 
   ctx.restore();
+
+  requestAnimationFrame(render);
 }
 
-// Mouse Controls (Pan & Click separation)
+// Mouse Controls
 canvas.addEventListener('mousedown', (e) => {
   isDragging = true;
   dragDistance = 0;
@@ -177,7 +274,6 @@ window.addEventListener('mousemove', (e) => {
     dragDistance += Math.abs(e.movementX) + Math.abs(e.movementY);
     camera.x = e.clientX - startPan.x;
     camera.y = e.clientY - startPan.y;
-    draw();
   }
 });
 
@@ -193,11 +289,10 @@ canvas.addEventListener('wheel', (e) => {
   } else {
     camera.zoom = Math.max(camera.zoom / zoomFactor, 0.4);
   }
-  draw();
 }, { passive: false });
 
 canvas.addEventListener('click', (e) => {
-  if (dragDistance > 5) return; // Ignore click events if user was panning
+  if (dragDistance > 5) return;
 
   const rect = canvas.getBoundingClientRect();
   const mouseX = (e.clientX - rect.left - canvas.width / 2 - camera.x) / camera.zoom;
@@ -220,7 +315,19 @@ canvas.addEventListener('click', (e) => {
     selectedNode = null;
     inspector.classList.add('hidden');
   }
-  draw();
+});
+
+// Search & Filter Listeners
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value.toLowerCase().trim();
+});
+
+filterChips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    filterChips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeCategory = chip.getAttribute('data-category');
+  });
 });
 
 function openInspectorPanel(node) {
@@ -246,7 +353,6 @@ function openInspectorPanel(node) {
 closeInspector.addEventListener('click', () => {
   inspector.classList.add('hidden');
   selectedNode = null;
-  draw();
 });
 
 unlockBtn.addEventListener('click', () => {
@@ -263,20 +369,36 @@ unlockBtn.addEventListener('click', () => {
   if (!userState.unlockedNodes.includes(selectedNode.id)) {
     userState.unlockedNodes.push(selectedNode.id);
     addXP(25);
+    saveState();
     openInspectorPanel(selectedNode);
-    draw();
   }
 });
 
 function addXP(amount) {
   userState.xp += amount;
   if (userState.xp >= 100) {
-    userState.level += 1;
-    userState.xp -= 100;
+    userState.level += Math.floor(userState.xp / 100);
+    userState.xp = userState.xp % 100;
   }
-  levelDisplay.innerText = `LVL ${userState.level}`;
-  xpDisplay.innerText = `XP: ${userState.xp} / 100`;
+  updateUI();
+  saveState();
 }
 
-// Initial Canvas setup and rendering
+// Reset Handler
+if (resetBtn) {
+  resetBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset all skill tree progress?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      userState = { ...defaultState };
+      selectedNode = null;
+      inspector.classList.add('hidden');
+      updateUI();
+    }
+  });
+}
+
+// Boot Sequence
+initParticles();
+updateUI();
 resizeCanvas();
+requestAnimationFrame(render);
