@@ -25,51 +25,53 @@ let isDragging = false;
 let startPan = { x: 0, y: 0 };
 let selectedNode = null;
 
-// Organic Node Definition: Added `magnitude` (size/glow) and `jitter` (organic offsets)
 const nodes = [
-  // Core Anchor
-  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The center of your sky.', radius: 0, angle: 0, magnitude: 22 },
+  // --- CORE STAR ---
+  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your sky.', radius: 0, angle: 0, magnitude: 20 },
 
-  // --- RING 1: Domain Anchors (Uneven Angles & Radii) ---
-  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement.', radius: 145, angle: 5, magnitude: 15 },
-  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Programming core.', radius: 165, angle: 78, magnitude: 16 },
-  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Mindfulness & focus.', radius: 135, angle: 140, magnitude: 15 },
-  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 170, angle: 222, magnitude: 15 },
-  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 150, angle: 295, magnitude: 15 },
+  // --- RING 1: Primary Domains (140px - Perfectly spaced 72° apart) ---
+  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement foundation.', radius: 140, angle: 0, magnitude: 15 },
+  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Programming core.', radius: 140, angle: 72, magnitude: 15 },
+  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Mindfulness & focus.', radius: 140, angle: 144, magnitude: 15 },
+  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 140, angle: 216, magnitude: 15 },
+  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 140, angle: 288, magnitude: 15 },
 
-  // --- RING 2: Asymmetric Skill Stars ---
-  // Fitness Cluster (Clustered unevenly around 5° angle)
-  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 270, angle: -18, magnitude: 11 },
-  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 290, angle: 28, magnitude: 10 },
+  // --- RING 2: Sub-Skills (Fan-out within isolated wedges & staggered radii) ---
+  
+  // Fitness Wedge (-25° to +25°)
+  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 240, angle: -20, magnitude: 11 },
+  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 270, angle: 20, magnitude: 10 },
 
-  // Code Cluster (Deeper branch offset)
-  { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 310, angle: 65, magnitude: 12 },
-  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 260, angle: 102, magnitude: 11 },
+  // Code Wedge (47° to 97°)
+  { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 250, angle: 52, magnitude: 11 },
+  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 280, angle: 92, magnitude: 10 },
 
-  // Mindset Cluster
-  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 255, angle: 128, magnitude: 11 },
-  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 300, angle: 162, magnitude: 10 },
+  // Mindset Wedge (119° to 169°)
+  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 240, angle: 124, magnitude: 11 },
+  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 275, angle: 164, magnitude: 10 },
 
-  // Art Cluster
-  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 285, angle: 208, magnitude: 11 },
-  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 250, angle: 248, magnitude: 10 },
+  // Art Wedge (191° to 241°)
+  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 250, angle: 196, magnitude: 11 },
+  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 280, angle: 236, magnitude: 10 },
 
-  // Habits Cluster
-  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 265, angle: 280, magnitude: 11 },
-  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 320, angle: 318, magnitude: 10 },
+  // Habits Wedge (263° to 313°)
+  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 240, angle: 268, magnitude: 11 },
+  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 275, angle: 308, magnitude: 10 },
 
-  // Hybrids (Bridging space gap between clusters)
-  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Code + Focus.', radius: 295, angle: 116, magnitude: 13 },
-  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Fitness + Sleep.', radius: 310, angle: 348, magnitude: 13 }
+  // --- RING 3: Outer Ring Hybrids (Pushed out to 360px so lines wrap around) ---
+  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Mindset.', radius: 360, angle: 108, magnitude: 13 },
+  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 360, angle: 334, magnitude: 13 }
 ];
 
 const connections = [
+  // Core to Ring 1
   { from: 'core', to: 'fit_1' },
   { from: 'core', to: 'code_1' },
   { from: 'core', to: 'mind_1' },
   { from: 'core', to: 'art_1' },
   { from: 'core', to: 'life_1' },
 
+  // Ring 1 to Ring 2 Branches
   { from: 'fit_1', to: 'fit_2a' },
   { from: 'fit_1', to: 'fit_2b' },
   { from: 'code_1', to: 'code_2a' },
@@ -81,10 +83,11 @@ const connections = [
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  { from: 'code_1', to: 'hyb_game_dev' },
+  // Hybrids (Connect to adjacent parent skills in Ring 2 for clean arcs)
+  { from: 'code_2b', to: 'hyb_game_dev' },
   { from: 'mind_2a', to: 'hyb_game_dev' },
   { from: 'fit_2a', to: 'hyb_biohack' },
-  { from: 'life_2a', to: 'hyb_biohack' }
+  { from: 'life_2b', to: 'hyb_biohack' }
 ];
 
 // Resize canvas dynamically
@@ -114,6 +117,7 @@ function draw() {
   ctx.scale(camera.zoom, camera.zoom);
 
 // --- DRAW ORGANIC CURVED CONNECTIONS ---
+  // --- DRAW CONNECTIONS ---
   connections.forEach(conn => {
     const parent = nodes.find(n => n.id === conn.from);
     const child = nodes.find(n => n.id === conn.to);
@@ -125,11 +129,11 @@ function draw() {
       const isConnectedUnlocked = parent.unlocked && child.unlocked;
       const isRelatedToSelection = selectedNode && (conn.from === selectedNode.id || conn.to === selectedNode.id);
 
-      // Midpoint with subtle perpendicular offset for organic arc curvature
+      // Mild curvature to prevent collisions
       const midX = (pPos.x + cPos.x) / 2;
       const midY = (pPos.y + cPos.y) / 2;
-      const controlX = midX + (cPos.y - pPos.y) * 0.12;
-      const controlY = midY - (cPos.x - pPos.x) * 0.12;
+      const controlX = midX + (cPos.y - pPos.y) * 0.05;
+      const controlY = midY - (cPos.x - pPos.x) * 0.05;
 
       ctx.beginPath();
       ctx.moveTo(pPos.x, pPos.y);
