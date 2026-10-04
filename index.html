@@ -5,49 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Constellation Skill Tree</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Modern Font Stack -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Top UI Bar -->
+  <!-- HUD Top Bar Overlay -->
   <header id="header">
-    <div class="stats">
-      <span id="level-display">LVL 1</span>
-      <span id="xp-display">XP: 0 / 100</span>
-    </div>
-
-    <!-- Search & Category Filters -->
-    <div class="controls-overlay">
-      <input type="text" id="search-input" placeholder="Search skills..." autocomplete="off">
-      <div class="filter-chips">
-        <button class="chip active" data-category="ALL">All</button>
-        <button class="chip" data-category="Fitness">Fitness</button>
-        <button class="chip" data-category="Craft">Craft</button>
-        <button class="chip" data-category="Mindset">Mindset</button>
-        <button class="chip" data-category="Art">Art</button>
-        <button class="chip" data-category="Habits">Habits</button>
-        <button class="chip" data-category="Hybrid">Hybrid</button>
+    
+    <!-- User Stats Card -->
+    <div class="stats-card">
+      <div class="level-badge">
+        <span class="label">LEVEL</span>
+        <span id="level-display" class="value">1</span>
+      </div>
+      <div class="xp-container">
+        <div class="xp-header">
+          <span class="xp-title">EXPERIENCE</span>
+          <span id="xp-display" class="xp-value">0 / 100 XP</span>
+        </div>
+        <div class="xp-bar-bg">
+          <div id="xp-bar-fill" class="xp-bar-fill" style="width: 0%;"></div>
+        </div>
       </div>
     </div>
 
-    <button id="reset-btn" class="danger-btn">Reset Progress</button>
+    <!-- Central Command Overlay: Search & Categories -->
+    <div class="command-bar">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search skills or keywords..." autocomplete="off">
+        <button id="clear-search" class="clear-btn hidden">&times;</button>
+        <kbd class="search-kbd">/</kbd>
+      </div>
+
+      <div class="filter-pills">
+        <button class="pill active" data-category="ALL">All Nodes</button>
+        <button class="pill" data-category="Fitness"><span class="dot fitness"></span>Fitness</button>
+        <button class="pill" data-category="Craft"><span class="dot craft"></span>Craft</button>
+        <button class="pill" data-category="Mindset"><span class="dot mindset"></span>Mindset</button>
+        <button class="pill" data-category="Art"><span class="dot art"></span>Art</button>
+        <button class="pill" data-category="Habits"><span class="dot habits"></span>Habits</button>
+        <button class="pill" data-category="Hybrid"><span class="dot hybrid"></span>Hybrid</button>
+      </div>
+    </div>
+
+    <!-- Danger Zone Button -->
+    <button id="reset-btn" class="reset-btn" title="Reset Tree Progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
+      Reset
+    </button>
   </header>
 
   <!-- Interactive Canvas -->
   <canvas id="skill-canvas"></canvas>
 
-  <!-- Node Inspector Panel -->
-  <aside id="inspector" class="hidden">
-    <button id="close-inspector">&times;</button>
-    <div class="inspector-content">
-      <span id="node-category" class="badge">Category</span>
+  <!-- Node Inspector Drawer -->
+  <aside id="inspector" class="inspector-card hidden">
+    <button id="close-inspector" class="close-btn">&times;</button>
+    <div class="inspector-header">
+      <span id="node-category" class="category-tag">Category</span>
       <h2 id="node-title">Node Title</h2>
-      <p id="node-desc">Node description will appear here when clicked.</p>
-      
-      <div class="progress-bar-container">
-        <div id="node-progress" class="progress-bar"></div>
+    </div>
+    <p id="node-desc">Node description will appear here when clicked.</p>
+    
+    <div class="unlock-status">
+      <div class="status-indicator">
+        <div id="node-progress" class="progress-fill"></div>
       </div>
-
-      <button id="unlock-btn" class="action-btn">Unlock Skill (+25 XP)</button>
+      <button id="unlock-btn" class="cta-btn">Unlock Skill (+25 XP)</button>
     </div>
   </aside>
 

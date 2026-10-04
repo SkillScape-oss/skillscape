@@ -11,13 +11,16 @@ const unlockBtn = document.getElementById('unlock-btn');
 const nodeProgress = document.getElementById('node-progress');
 const levelDisplay = document.getElementById('level-display');
 const xpDisplay = document.getElementById('xp-display');
+const xpBarFill = document.getElementById('xp-bar-fill');
 const resetBtn = document.getElementById('reset-btn');
 
 // Search & Filter UI Elements
 const searchInput = document.getElementById('search-input');
-const filterChips = document.querySelectorAll('.chip');
+const clearSearchBtn = document.getElementById('clear-search');
+const searchKbd = document.querySelector('.search-kbd');
+const filterPills = document.querySelectorAll('.pill');
 
-// Storage Key & Default State
+// LocalStorage Configuration
 const STORAGE_KEY = 'constellation_skill_tree_save';
 
 const defaultState = {
@@ -26,19 +29,15 @@ const defaultState = {
   unlockedNodes: ['core']
 };
 
-// User State (Loaded from LocalStorage)
 let userState = loadState();
-
-// Active Search/Filter Query State
 let searchQuery = '';
 let activeCategory = 'ALL';
 
-// Save & Load Functions
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
   } catch (e) {
-    console.error('Failed to save state to LocalStorage:', e);
+    console.error('Failed to save state:', e);
   }
 }
 
@@ -54,36 +53,36 @@ function loadState() {
       };
     }
   } catch (e) {
-    console.error('Failed to load state from LocalStorage:', e);
+    console.error('Failed to load state:', e);
   }
   return { ...defaultState };
 }
 
-// Camera & Interaction State
+// Camera & Drag State
 let camera = { x: 0, y: 0, zoom: 1 };
 let isDragging = false;
 let startPan = { x: 0, y: 0 };
 let dragDistance = 0;
 let selectedNode = null;
 
-// Ambient Starfield Particles
+// Background Starfield Particles
 const particles = [];
-const PARTICLE_COUNT = 120;
+const PARTICLE_COUNT = 140;
 
 function initParticles() {
   particles.length = 0;
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     particles.push({
-      x: (Math.random() - 0.5) * 3000,
-      y: (Math.random() - 0.5) * 3000,
-      size: Math.random() * 1.5 + 0.5,
+      x: (Math.random() - 0.5) * 3200,
+      y: (Math.random() - 0.5) * 3200,
+      size: Math.random() * 1.6 + 0.4,
       alpha: Math.random() * 0.7 + 0.2,
       pulseSpeed: Math.random() * 0.02 + 0.005
     });
   }
 }
 
-// Clean Non-Overlapping Skill Nodes
+// Skill Topology
 const nodes = [
   { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your sky.', radius: 0, angle: 0, magnitude: 18 },
 
@@ -116,14 +115,12 @@ const nodes = [
 ];
 
 const connections = [
-  // Core connections
   { from: 'core', to: 'fit_1' },
   { from: 'core', to: 'code_1' },
   { from: 'core', to: 'mind_1' },
   { from: 'core', to: 'art_1' },
   { from: 'core', to: 'life_1' },
 
-  // Domain to Sub-skill connections
   { from: 'fit_1', to: 'fit_2a' },
   { from: 'fit_1', to: 'fit_2b' },
   { from: 'code_1', to: 'code_2a' },
@@ -135,7 +132,6 @@ const connections = [
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  // Hybrid connections
   { from: 'code_2b', to: 'hyb_game_dev' },
   { from: 'mind_2a', to: 'hyb_game_dev' },
   { from: 'fit_2a', to: 'hyb_biohack' },
@@ -163,8 +159,9 @@ function isNodeMatchingSearch(node) {
 }
 
 function updateUI() {
-  levelDisplay.innerText = `LVL ${userState.level}`;
-  xpDisplay.innerText = `XP: ${userState.xp} / 100`;
+  levelDisplay.innerText = userState.level;
+  xpDisplay.innerText = `${userState.xp} / 100 XP`;
+  xpBarFill.style.width = `${userState.xp}%`;
 }
 
 // Render Loop
@@ -175,16 +172,16 @@ function render() {
   ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
   ctx.scale(camera.zoom, camera.zoom);
 
-  // 1. Draw Starfield Background Dust
+  // 1. Particle Starfield
   particles.forEach(p => {
     p.alpha += Math.sin(Date.now() * 0.001 + p.x) * p.pulseSpeed * 0.05;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(0.8, p.alpha))})`;
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(0.7, p.alpha))})`;
     ctx.fill();
   });
 
-  // 2. Draw Connections
+  // 2. Connections
   connections.forEach(conn => {
     const parent = nodes.find(n => n.id === conn.from);
     const child = nodes.find(n => n.id === conn.to);
@@ -211,7 +208,7 @@ function render() {
     }
   });
 
-  // 3. Draw Nodes
+  // 3. Nodes
   nodes.forEach(node => {
     const pos = getNodePosition(node);
     const isSelected = selectedNode && selectedNode.id === node.id;
@@ -226,18 +223,17 @@ function render() {
     if (matchesFilter) {
       if (isUnlocked) {
         ctx.fillStyle = node.category === 'Hybrid' ? '#ffb700' : '#00f3ff';
-        ctx.shadowBlur = isSelected ? 20 : 12;
+        ctx.shadowBlur = isSelected ? 22 : 12;
         ctx.shadowColor = ctx.fillStyle;
       } else {
-        ctx.fillStyle = '#11172a';
+        ctx.fillStyle = '#0f172a';
         ctx.shadowBlur = 0;
       }
       ctx.lineWidth = isSelected ? 3 : 1.5;
-      ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#2e3856');
+      ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#334155');
     } else {
-      // Dimmed state for filtered out nodes
-      ctx.fillStyle = 'rgba(17, 23, 42, 0.3)';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.lineWidth = 1;
       ctx.shadowBlur = 0;
     }
@@ -245,16 +241,16 @@ function render() {
     ctx.fill();
     ctx.stroke();
 
-    // Node Label
+    // Node Title Text
     ctx.shadowBlur = 0;
     if (matchesFilter) {
-      ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.6)';
+      ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.55)';
     } else {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
     }
-    ctx.font = '11px sans-serif';
+    ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(node.name, pos.x, pos.y + radius + 14);
+    ctx.fillText(node.name, pos.x, pos.y + radius + 15);
   });
 
   ctx.restore();
@@ -262,7 +258,7 @@ function render() {
   requestAnimationFrame(render);
 }
 
-// Mouse Controls
+// Mouse Pan & Zoom
 canvas.addEventListener('mousedown', (e) => {
   isDragging = true;
   dragDistance = 0;
@@ -320,13 +316,36 @@ canvas.addEventListener('click', (e) => {
 // Search & Filter Listeners
 searchInput.addEventListener('input', (e) => {
   searchQuery = e.target.value.toLowerCase().trim();
+  if (searchQuery.length > 0) {
+    clearSearchBtn.classList.remove('hidden');
+    searchKbd.classList.add('hidden');
+  } else {
+    clearSearchBtn.classList.add('hidden');
+    searchKbd.classList.remove('hidden');
+  }
 });
 
-filterChips.forEach(chip => {
-  chip.addEventListener('click', () => {
-    filterChips.forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    activeCategory = chip.getAttribute('data-category');
+clearSearchBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  searchQuery = '';
+  clearSearchBtn.classList.add('hidden');
+  searchKbd.classList.remove('hidden');
+  searchInput.focus();
+});
+
+// Keyboard Shortcut '/' to Search
+window.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
+filterPills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    filterPills.forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeCategory = pill.getAttribute('data-category');
   });
 });
 
@@ -384,7 +403,7 @@ function addXP(amount) {
   saveState();
 }
 
-// Reset Handler
+// Reset Progress
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
     if (confirm('Are you sure you want to reset all skill tree progress?')) {
@@ -397,7 +416,7 @@ if (resetBtn) {
   });
 }
 
-// Boot Sequence
+// Initialization
 initParticles();
 updateUI();
 resizeCanvas();
