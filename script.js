@@ -19,59 +19,54 @@ let userState = {
   unlockedNodes: ['core']
 };
 
-// Canvas World Transform (Pan & Zoom)
+// Camera & Drag State
 let camera = { x: 0, y: 0, zoom: 1 };
 let isDragging = false;
 let startPan = { x: 0, y: 0 };
+let dragDistance = 0;
 let selectedNode = null;
 
+// Clean Non-Overlapping Node Topology
 const nodes = [
-  // --- CORE STAR ---
-  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your sky.', radius: 0, angle: 0, magnitude: 20 },
+  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your sky.', radius: 0, angle: 0, magnitude: 18 },
 
-  // --- RING 1: Primary Domains (140px - Perfectly spaced 72° apart) ---
-  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement foundation.', radius: 140, angle: 0, magnitude: 15 },
-  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Programming core.', radius: 140, angle: 72, magnitude: 15 },
-  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Mindfulness & focus.', radius: 140, angle: 144, magnitude: 15 },
-  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 140, angle: 216, magnitude: 15 },
-  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 140, angle: 288, magnitude: 15 },
+  // Ring 1: Main Domains
+  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement foundation.', radius: 140, angle: 0, magnitude: 14 },
+  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Programming core.', radius: 140, angle: 72, magnitude: 14 },
+  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Mindfulness & focus.', radius: 140, angle: 144, magnitude: 14 },
+  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 140, angle: 216, magnitude: 14 },
+  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 140, angle: 288, magnitude: 14 },
 
-  // --- RING 2: Sub-Skills (Fan-out within isolated wedges & staggered radii) ---
-  
-  // Fitness Wedge (-25° to +25°)
+  // Ring 2: Sub-skills (Connected ONLY to their domain parent)
   { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 240, angle: -20, magnitude: 11 },
   { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 270, angle: 20, magnitude: 10 },
 
-  // Code Wedge (47° to 97°)
   { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 250, angle: 52, magnitude: 11 },
   { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 280, angle: 92, magnitude: 10 },
 
-  // Mindset Wedge (119° to 169°)
   { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 240, angle: 124, magnitude: 11 },
   { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 275, angle: 164, magnitude: 10 },
 
-  // Art Wedge (191° to 241°)
   { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 250, angle: 196, magnitude: 11 },
   { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 280, angle: 236, magnitude: 10 },
 
-  // Habits Wedge (263° to 313°)
   { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 240, angle: 268, magnitude: 11 },
   { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 275, angle: 308, magnitude: 10 },
 
-  // --- RING 3: Outer Ring Hybrids (Pushed out to 360px so lines wrap around) ---
-  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Mindset.', radius: 360, angle: 108, magnitude: 13 },
-  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 360, angle: 334, magnitude: 13 }
+  // Hybrids
+  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Focus.', radius: 360, angle: 108, magnitude: 12 },
+  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 360, angle: 334, magnitude: 12 }
 ];
 
 const connections = [
-  // Core to Ring 1
+  // Core connections
   { from: 'core', to: 'fit_1' },
   { from: 'core', to: 'code_1' },
   { from: 'core', to: 'mind_1' },
   { from: 'core', to: 'art_1' },
   { from: 'core', to: 'life_1' },
 
-  // Ring 1 to Ring 2 Branches
+  // Domain to Sub-skill connections
   { from: 'fit_1', to: 'fit_2a' },
   { from: 'fit_1', to: 'fit_2b' },
   { from: 'code_1', to: 'code_2a' },
@@ -83,14 +78,14 @@ const connections = [
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  // Hybrids (Connect to adjacent parent skills in Ring 2 for clean arcs)
+  // Hybrid connections
   { from: 'code_2b', to: 'hyb_game_dev' },
   { from: 'mind_2a', to: 'hyb_game_dev' },
   { from: 'fit_2a', to: 'hyb_biohack' },
-  { from: 'life_2b', to: 'hyb_biohack' }
+  { from: 'life_2a', to: 'hyb_biohack' }
 ];
 
-// Resize canvas dynamically
+// Resize canvas pixel dimensions to match display window
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -98,7 +93,6 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// Helper: Convert Radial Coordinates to Cartesian with Natural Jitter
 function getNodePosition(node) {
   const rad = (node.angle * Math.PI) / 180;
   return {
@@ -107,17 +101,15 @@ function getNodePosition(node) {
   };
 }
 
-// Main Render Loop
+// Draw Function
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
-  // Move context origin to center of screen + apply pan/zoom
   ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
   ctx.scale(camera.zoom, camera.zoom);
 
-// --- DRAW ORGANIC CURVED CONNECTIONS ---
-  // --- DRAW CONNECTIONS ---
+  // Draw Connections
   connections.forEach(conn => {
     const parent = nodes.find(n => n.id === conn.from);
     const child = nodes.find(n => n.id === conn.to);
@@ -126,74 +118,63 @@ function draw() {
       const pPos = getNodePosition(parent);
       const cPos = getNodePosition(child);
 
-      const isConnectedUnlocked = parent.unlocked && child.unlocked;
-      const isRelatedToSelection = selectedNode && (conn.from === selectedNode.id || conn.to === selectedNode.id);
-
-      // Mild curvature to prevent collisions
-      const midX = (pPos.x + cPos.x) / 2;
-      const midY = (pPos.y + cPos.y) / 2;
-      const controlX = midX + (cPos.y - pPos.y) * 0.05;
-      const controlY = midY - (cPos.x - pPos.x) * 0.05;
+      const isConnectedUnlocked = userState.unlockedNodes.includes(parent.id) && userState.unlockedNodes.includes(child.id);
 
       ctx.beginPath();
       ctx.moveTo(pPos.x, pPos.y);
-      ctx.quadraticCurveTo(controlX, controlY, cPos.x, cPos.y);
+      ctx.lineTo(cPos.x, cPos.y);
 
-      if (selectedNode) {
-        ctx.strokeStyle = isRelatedToSelection ? '#00f3ff' : 'rgba(255, 255, 255, 0.04)';
-        ctx.lineWidth = isRelatedToSelection ? 2.5 : 0.6;
-      } else {
-        ctx.strokeStyle = isConnectedUnlocked ? 'rgba(0, 243, 255, 0.8)' : 'rgba(255, 255, 255, 0.12)';
-        ctx.lineWidth = isConnectedUnlocked ? 1.8 : 0.8;
-      }
-
+      ctx.strokeStyle = isConnectedUnlocked ? '#00f3ff' : 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = isConnectedUnlocked ? 2 : 1;
       ctx.stroke();
     }
   });
 
-  // --- DRAW ORGANIC STAR NODES ---
+  // Draw Nodes
   nodes.forEach(node => {
     const pos = getNodePosition(node);
     const isSelected = selectedNode && selectedNode.id === node.id;
     const isUnlocked = userState.unlockedNodes.includes(node.id);
-    node.unlocked = isUnlocked;
 
-    const baseRadius = node.magnitude || 10;
+    const radius = node.magnitude || 10;
 
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, baseRadius, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
 
     if (isUnlocked) {
       ctx.fillStyle = node.category === 'Hybrid' ? '#ffb700' : '#00f3ff';
-      ctx.shadowBlur = isSelected ? 22 : 12;
+      ctx.shadowBlur = 12;
       ctx.shadowColor = ctx.fillStyle;
     } else {
-      ctx.fillStyle = '#0f1526';
+      ctx.fillStyle = '#11172a';
       ctx.shadowBlur = 0;
     }
 
     ctx.fill();
-    ctx.lineWidth = isSelected ? 2.5 : 1.5;
-    ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#283350');
+    ctx.lineWidth = isSelected ? 3 : 1.5;
+    ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#2e3856');
     ctx.stroke();
 
-    // Star Label
     ctx.shadowBlur = 0;
-    ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.45)';
-    ctx.font = node.id === 'core' ? 'bold 13px sans-serif' : '11px sans-serif';
+    ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(node.name, pos.x, pos.y + baseRadius + 14);
+    ctx.fillText(node.name, pos.x, pos.y + radius + 14);
   });
+
+  ctx.restore();
 }
 
-// Interactivity: Pan & Zoom
+// Mouse Controls (Pan & Click separation)
 canvas.addEventListener('mousedown', (e) => {
   isDragging = true;
+  dragDistance = 0;
   startPan = { x: e.clientX - camera.x, y: e.clientY - camera.y };
 });
 
 window.addEventListener('mousemove', (e) => {
   if (isDragging) {
+    dragDistance += Math.abs(e.movementX) + Math.abs(e.movementY);
     camera.x = e.clientX - startPan.x;
     camera.y = e.clientY - startPan.y;
     draw();
@@ -215,22 +196,19 @@ canvas.addEventListener('wheel', (e) => {
   draw();
 }, { passive: false });
 
-// Node Click Detection
 canvas.addEventListener('click', (e) => {
+  if (dragDistance > 5) return; // Ignore clicks if user was dragging
+
   const rect = canvas.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left - canvas.width / 2 - camera.x;
-  const mouseY = e.clientY - rect.top - canvas.height / 2 - camera.y;
+  const mouseX = (e.clientX - rect.left - canvas.width / 2 - camera.x) / camera.zoom;
+  const mouseY = (e.clientY - rect.top - canvas.height / 2 - camera.y) / camera.zoom;
 
   let clickedNode = null;
 
   nodes.forEach(node => {
     const pos = getNodePosition(node);
-    // Adjusted position accounting for camera zoom
-    const worldX = pos.x * camera.zoom;
-    const worldY = pos.y * camera.zoom;
-    
-    const dist = Math.hypot(mouseX - worldX, mouseY - worldY);
-    if (dist < 20 * camera.zoom) {
+    const dist = Math.hypot(mouseX - pos.x, mouseY - pos.y);
+    if (dist < (node.magnitude || 12) + 6) {
       clickedNode = node;
     }
   });
@@ -245,7 +223,6 @@ canvas.addEventListener('click', (e) => {
   draw();
 });
 
-// UI Inspector Logic
 function openInspectorPanel(node) {
   nodeTitle.innerText = node.name;
   nodeCategory.innerText = node.category;
@@ -272,30 +249,17 @@ closeInspector.addEventListener('click', () => {
   draw();
 });
 
-// Unlock Skill Event
-// Unlock Skill Event with Multi-Prerequisite Support
 unlockBtn.addEventListener('click', () => {
   if (!selectedNode) return;
 
-  // 1. Find ALL parent connections for the selected node
   const parentConnections = connections.filter(c => c.to === selectedNode.id);
-
-  // 2. Check if EVERY parent skill has been unlocked
-  const allParentsUnlocked = parentConnections.every(conn => 
-    userState.unlockedNodes.includes(conn.from)
-  );
+  const allParentsUnlocked = parentConnections.every(conn => userState.unlockedNodes.includes(conn.from));
 
   if (!allParentsUnlocked) {
-    // Collect the names of required parent nodes for a helpful error message
-    const requiredParentNames = parentConnections
-      .map(conn => nodes.find(n => n.id === conn.from)?.name)
-      .join(' AND ');
-
-    alert(`Locked! You must unlock ALL prerequisite skills first: [${requiredParentNames}]`);
+    alert('Unlock the prerequisite skills first!');
     return;
   }
 
-  // 3. Unlock node if prerequisites are met
   if (!userState.unlockedNodes.includes(selectedNode.id)) {
     userState.unlockedNodes.push(selectedNode.id);
     addXP(25);
@@ -304,7 +268,6 @@ unlockBtn.addEventListener('click', () => {
   }
 });
 
-// XP & Level System
 function addXP(amount) {
   userState.xp += amount;
   if (userState.xp >= 100) {
@@ -315,5 +278,5 @@ function addXP(amount) {
   xpDisplay.innerText = `XP: ${userState.xp} / 100`;
 }
 
-// Initial Launch
+// Start
 resizeCanvas();
