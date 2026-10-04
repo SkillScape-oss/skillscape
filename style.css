@@ -99,12 +99,14 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 120px;
+  min-width: 160px; /* Increased from 120px to prevent cramped text */
 }
 
 .xp-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px; /* Ensures minimum spacing between label and value */
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -112,11 +114,15 @@ body, html {
 
 .xp-title {
   color: var(--text-muted);
+  white-space: nowrap; /* Prevents "EXPERIENCE" from wrapping */
 }
 
 .xp-value {
   color: var(--accent-gold);
+  white-space: nowrap; /* Keeps "50 / 100 XP" on a single line */
+  text-align: right;
 }
+
 
 .xp-bar-bg {
   width: 100%;
