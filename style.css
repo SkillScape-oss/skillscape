@@ -109,35 +109,21 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 180px; /* Increased from 120px/160px */
+  min-width: 130px;
 }
 
 .xp-header {
   display: flex;
-  flex-direction: column; /* Stacks title on top, value on bottom */
-  align-items: flex-start;
-  gap: 2px;
+  justify-content: flex-end; /* Aligns the XP fraction nicely to the right */
+  width: 100%;
 }
 
-.xp-title {
-  color: var(--text-muted);
-  white-space: nowrap !important;
-  flex-shrink: 0;
-  font-size: 0.65rem;
+.xp-value {
+  color: var(--accent-gold);
+  white-space: nowrap !important; /* Ensures "0 / 100 XP" stays on one line */
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.5px;
-}
-
-/* Force #xp-display to NEVER wrap spaces */
-#xp-display, .xp-value {
-  color: var(--accent-gold);
-  white-space: nowrap !important; /* Prevents wrapping at spaces */
-  word-break: keep-all !important;  /* Prevents breaking words */
-  flex-shrink: 0;
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-align: right;
 }
 
 
