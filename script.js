@@ -71,7 +71,20 @@ const nodes = [
   { id: 'code_3', name: 'Full-Stack Mastery', category: 'Craft', desc: 'Deploying autonomous microservices and AI systems.', radius: 380, angle: 72 },
   { id: 'mind_3', name: 'Flow State Control', category: 'Mindset', desc: 'Triggering peak performance and effortless work output.', radius: 380, angle: 144 },
   { id: 'art_3', name: '3D & Generative Art', category: 'Art', desc: 'Creating procedural worlds and shaders.', radius: 380, angle: 216 },
-  { id: 'life_3', name: 'Circadian Optimization', category: 'Habits', desc: 'Synchronizing light exposure, nutrition, and recovery cycles.', radius: 380, angle: 288 }
+  { id: 'life_3', name: 'Circadian Optimization', category: 'Habits', desc: 'Synchronizing light exposure, nutrition, and recovery cycles.', radius: 380, angle: 288 },
+
+  // ==========================================
+  // HYBRID SKILLS (Require 2 Parents)
+  // ==========================================
+
+  // Hybrid Gen 2: Mindset (144°) + Craft (72°) -> Angle: 108°
+  { id: 'hyb_game_dev', name: 'Game Design Flow', category: 'Hybrid', desc: 'Combines Logic & Code with Deep Focus.', radius: 260, angle: 108 },
+
+  // Hybrid Gen 2: Fitness (0°) + Habits (288°) -> Angle: 324°
+  { id: 'hyb_biohack', name: 'Biohacking Routine', category: 'Hybrid', desc: 'Combines Physical Vitality with Sleep Mastery.', radius: 260, angle: 324 },
+
+  // Hybrid Gen 3: Craft (72°) + Art (216°) -> Angle: 144° (Outer Ring)
+  { id: 'hyb_creative_tech', name: 'Interactive Experience', category: 'Mastery Hybrid', desc: 'Requires System Architecture AND Design Systems.', radius: 380, angle: 144 }
 ];
 
 // Connections between nodes (Parent -> Child)
@@ -109,7 +122,21 @@ const connections = [
   { from: 'code_2a', to: 'code_3' },
   { from: 'mind_2a', to: 'mind_3' },
   { from: 'art_2a', to: 'art_3' },
-  { from: 'life_2a', to: 'life_3' }
+  { from: 'life_2a', to: 'life_3' },
+
+  // --- Hybrid Dual-Parent Connections ---
+  
+  // Game Design Flow requires BOTH Logic & Code AND Mental Clarity
+  { from: 'code_1', to: 'hyb_game_dev' },
+  { from: 'mind_1', to: 'hyb_game_dev' },
+
+  // Biohacking Routine requires BOTH Physical Vitality AND Life Balance
+  { from: 'fit_1', to: 'hyb_biohack' },
+  { from: 'life_1', to: 'hyb_biohack' },
+
+  // Interactive Experience requires BOTH System Architecture AND Design Systems
+  { from: 'code_2a', to: 'hyb_creative_tech' },
+  { from: 'art_2a', to: 'hyb_creative_tech' }
 ];
 
 // Resize canvas dynamically
@@ -289,18 +316,29 @@ closeInspector.addEventListener('click', () => {
 });
 
 // Unlock Skill Event
+// Unlock Skill Event with Multi-Prerequisite Support
 unlockBtn.addEventListener('click', () => {
   if (!selectedNode) return;
 
-  // Find parent connection
-  const parentConnection = connections.find(c => c.to === selectedNode.id);
-  const isParentUnlocked = !parentConnection || userState.unlockedNodes.includes(parentConnection.from);
+  // 1. Find ALL parent connections for the selected node
+  const parentConnections = connections.filter(c => c.to === selectedNode.id);
 
-  if (!isParentUnlocked) {
-    alert('You must unlock the preceding skill node first!');
+  // 2. Check if EVERY parent skill has been unlocked
+  const allParentsUnlocked = parentConnections.every(conn => 
+    userState.unlockedNodes.includes(conn.from)
+  );
+
+  if (!allParentsUnlocked) {
+    // Collect the names of required parent nodes for a helpful error message
+    const requiredParentNames = parentConnections
+      .map(conn => nodes.find(n => n.id === conn.from)?.name)
+      .join(' AND ');
+
+    alert(`Locked! You must unlock ALL prerequisite skills first: [${requiredParentNames}]`);
     return;
   }
 
+  // 3. Unlock node if prerequisites are met
   if (!userState.unlockedNodes.includes(selectedNode.id)) {
     userState.unlockedNodes.push(selectedNode.id);
     addXP(25);
