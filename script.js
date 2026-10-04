@@ -37,25 +37,25 @@ const nodes = [
   { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 140, angle: 216, magnitude: 14 },
   { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 140, angle: 288, magnitude: 14 },
 
-  // Ring 2: Sub-skills (Connected ONLY to their domain parent)
-  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 240, angle: -20, magnitude: 11 },
-  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 270, angle: 20, magnitude: 10 },
+  // Ring 2: Sub-skills (Angled so adjacent sectors stay clear)
+  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 240, angle: -15, magnitude: 11 },
+  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 270, angle: 15, magnitude: 10 },
 
-  { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 250, angle: 52, magnitude: 11 },
-  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 280, angle: 92, magnitude: 10 },
+  { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 250, angle: 57, magnitude: 11 },
+  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 280, angle: 87, magnitude: 10 },
 
-  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 240, angle: 124, magnitude: 11 },
-  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 275, angle: 164, magnitude: 10 },
+  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 240, angle: 129, magnitude: 11 },
+  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 275, angle: 159, magnitude: 10 },
 
-  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 250, angle: 196, magnitude: 11 },
-  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 280, angle: 236, magnitude: 10 },
+  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 250, angle: 201, magnitude: 11 },
+  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 280, angle: 231, magnitude: 10 },
 
-  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 240, angle: 268, magnitude: 11 },
-  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 275, angle: 308, magnitude: 10 },
+  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 240, angle: 273, magnitude: 11 },
+  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 275, angle: 303, magnitude: 10 },
 
-  // Hybrids
-  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Focus.', radius: 360, angle: 108, magnitude: 12 },
-  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 360, angle: 334, magnitude: 12 }
+  // Hybrids: Positioned in open spaces between parents
+  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Requires Code AND Focus.', radius: 340, angle: 108, magnitude: 12 },
+  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Requires Fitness AND Sleep Mastery.', radius: 340, angle: -45, magnitude: 12 }
 ];
 
 const connections = [
@@ -78,11 +78,11 @@ const connections = [
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  // Hybrid connections
+  // Hybrid connections (Adjacent endpoints only — no sector cross-overs)
   { from: 'code_2b', to: 'hyb_game_dev' },
   { from: 'mind_2a', to: 'hyb_game_dev' },
   { from: 'fit_2a', to: 'hyb_biohack' },
-  { from: 'life_2a', to: 'hyb_biohack' }
+  { from: 'life_2b', to: 'hyb_biohack' }
 ];
 
 // Resize canvas pixel dimensions to match display window
@@ -197,7 +197,7 @@ canvas.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 canvas.addEventListener('click', (e) => {
-  if (dragDistance > 5) return; // Ignore clicks if user was dragging
+  if (dragDistance > 5) return; // Ignore click events if user was panning
 
   const rect = canvas.getBoundingClientRect();
   const mouseX = (e.clientX - rect.left - canvas.width / 2 - camera.x) / camera.zoom;
@@ -278,5 +278,5 @@ function addXP(amount) {
   xpDisplay.innerText = `XP: ${userState.xp} / 100`;
 }
 
-// Start
+// Initial Canvas setup and rendering
 resizeCanvas();
