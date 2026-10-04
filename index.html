@@ -3,14 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skillscape</title>
+  <title>Skillscape - Interactive Constellation</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
-    <h1>Skillscape</h1>
+    <!-- Main Interactive Canvas -->
     <canvas id="skill-canvas"></canvas>
+
+    <!-- Top Overlay Header -->
+    <header id="ui-header">
+      <div class="logo">SKILLSCAPE</div>
+      <div class="stats">
+        <span id="level-display">LVL 1</span>
+        <span id="xp-display">XP: 0 / 100</span>
+      </div>
+    </header>
+
+    <!-- Side Inspector Panel -->
+    <aside id="inspector" class="hidden">
+      <button id="close-inspector">&times;</button>
+      <h2 id="node-title">Node Name</h2>
+      <p id="node-category" class="badge">Category</p>
+      <p id="node-desc">Node description will appear here.</p>
+      
+      <div class="progress-bar-container">
+        <div id="node-progress" class="progress-bar"></div>
+      </div>
+      
+      <button id="unlock-btn" class="btn-primary">Unlock Skill (+25 XP)</button>
+    </aside>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
