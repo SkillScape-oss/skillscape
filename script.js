@@ -25,118 +25,66 @@ let isDragging = false;
 let startPan = { x: 0, y: 0 };
 let selectedNode = null;
 
-// Initial Skill Nodes Data (Radial Constellation Structure)
+// Organic Node Definition: Added `magnitude` (size/glow) and `jitter` (organic offsets)
 const nodes = [
-  // ==========================================
-  // GENERATION 0: Core Origin
-  // ==========================================
-  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The starting center of your life universe.', radius: 0, angle: 0 },
+  // Core Anchor
+  { id: 'core', name: 'Origin Star', category: 'Core', desc: 'The center of your sky.', radius: 0, angle: 0, magnitude: 22 },
 
-  // ==========================================
-  // GENERATION 1: Primary Domains (Radius: 140px)
-  // ==========================================
-  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement and exercise foundation.', radius: 140, angle: 0 },
-  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Fundamentals of programming and problem solving.', radius: 140, angle: 72 },
-  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Meditation, mindfulness, and mental health.', radius: 140, angle: 144 },
-  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Visual design, writing, and creative output.', radius: 140, angle: 216 },
-  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Daily routines, organization, and recovery.', radius: 140, angle: 288 },
+  // --- RING 1: Domain Anchors (Uneven Angles & Radii) ---
+  { id: 'fit_1', name: 'Physical Vitality', category: 'Fitness', desc: 'Daily movement.', radius: 145, angle: 5, magnitude: 15 },
+  { id: 'code_1', name: 'Logic & Code', category: 'Craft', desc: 'Programming core.', radius: 165, angle: 78, magnitude: 16 },
+  { id: 'mind_1', name: 'Mental Clarity', category: 'Mindset', desc: 'Mindfulness & focus.', radius: 135, angle: 140, magnitude: 15 },
+  { id: 'art_1', name: 'Creative Flow', category: 'Art', desc: 'Design & expression.', radius: 170, angle: 222, magnitude: 15 },
+  { id: 'life_1', name: 'Life Balance', category: 'Habits', desc: 'Routines & recovery.', radius: 150, angle: 295, magnitude: 15 },
 
-  // ==========================================
-  // GENERATION 2: Intermediate Specializations (Radius: 260px)
-  // ==========================================
-  // Fitness Branch
-  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance training and muscle development.', radius: 260, angle: -15 },
-  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Building aerobic endurance and stamina.', radius: 260, angle: 15 },
+  // --- RING 2: Asymmetric Skill Stars ---
+  // Fitness Cluster (Clustered unevenly around 5° angle)
+  { id: 'fit_2a', name: 'Strength Training', category: 'Fitness', desc: 'Resistance work.', radius: 270, angle: -18, magnitude: 11 },
+  { id: 'fit_2b', name: 'Cardio Engine', category: 'Fitness', desc: 'Stamina building.', radius: 290, angle: 28, magnitude: 10 },
 
-  // Code Branch
-  { id: 'code_2a', name: 'System Architecture', category: 'Craft', desc: 'Building scalable backend systems and APIs.', radius: 260, angle: 57 },
-  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI/UX layout, animations, and interactive web apps.', radius: 260, angle: 87 },
+  // Code Cluster (Deeper branch offset)
+  { id: 'code_2a', name: 'System Arch', category: 'Craft', desc: 'Backend systems.', radius: 310, angle: 65, magnitude: 12 },
+  { id: 'code_2b', name: 'Frontend Canvas', category: 'Craft', desc: 'UI & web canvas.', radius: 260, angle: 102, magnitude: 11 },
 
-  // Mindset Branch
-  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Sustained concentration without digital distraction.', radius: 260, angle: 129 },
-  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic reflection and emotional regulation.', radius: 260, angle: 159 },
+  // Mindset Cluster
+  { id: 'mind_2a', name: 'Deep Focus', category: 'Mindset', desc: 'Flow state focus.', radius: 255, angle: 128, magnitude: 11 },
+  { id: 'mind_2b', name: 'Emotional Control', category: 'Mindset', desc: 'Stoic stability.', radius: 300, angle: 162, magnitude: 10 },
 
-  // Creative Branch
-  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color theory, typography, and UI aesthetics.', radius: 260, angle: 201 },
-  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure and compelling communication.', radius: 260, angle: 231 },
+  // Art Cluster
+  { id: 'art_2a', name: 'Design Systems', category: 'Art', desc: 'Color & typography.', radius: 285, angle: 208, magnitude: 11 },
+  { id: 'art_2b', name: 'Storytelling', category: 'Art', desc: 'Narrative structure.', radius: 250, angle: 248, magnitude: 10 },
 
-  // Habits Branch
-  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Optimizing sleep environment and sleep hygiene.', radius: 260, angle: 273 },
-  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structuring days with time blocks and priority queues.', radius: 260, angle: 303 },
+  // Habits Cluster
+  { id: 'life_2a', name: 'Sleep Mastery', category: 'Habits', desc: 'Sleep environment.', radius: 265, angle: 280, magnitude: 11 },
+  { id: 'life_2b', name: 'Time Boxing', category: 'Habits', desc: 'Structured blocks.', radius: 320, angle: 318, magnitude: 10 },
 
-  // ==========================================
-  // GENERATION 3: Advanced Mastery Skills (Radius: 380px)
-  // ==========================================
-  { id: 'fit_3', name: 'Athletic Peak', category: 'Fitness', desc: 'Advanced metabolic conditioning and peak physical output.', radius: 380, angle: 0 },
-  { id: 'code_3', name: 'Full-Stack Mastery', category: 'Craft', desc: 'Deploying autonomous microservices and AI systems.', radius: 380, angle: 72 },
-  { id: 'mind_3', name: 'Flow State Control', category: 'Mindset', desc: 'Triggering peak performance and effortless work output.', radius: 380, angle: 144 },
-  { id: 'art_3', name: '3D & Generative Art', category: 'Art', desc: 'Creating procedural worlds and shaders.', radius: 380, angle: 216 },
-  { id: 'life_3', name: 'Circadian Optimization', category: 'Habits', desc: 'Synchronizing light exposure, nutrition, and recovery cycles.', radius: 380, angle: 288 },
-
-  // ==========================================
-  // HYBRID SKILLS (Require 2 Parents)
-  // ==========================================
-
-  // Hybrid Gen 2: Mindset (144°) + Craft (72°) -> Angle: 108°
-  { id: 'hyb_game_dev', name: 'Game Design Flow', category: 'Hybrid', desc: 'Combines Logic & Code with Deep Focus.', radius: 260, angle: 108 },
-
-  // Hybrid Gen 2: Fitness (0°) + Habits (288°) -> Angle: 324°
-  { id: 'hyb_biohack', name: 'Biohacking Routine', category: 'Hybrid', desc: 'Combines Physical Vitality with Sleep Mastery.', radius: 260, angle: 324 },
-
-  // Hybrid Gen 3: Craft (72°) + Art (216°) -> Angle: 144° (Outer Ring)
-  { id: 'hyb_creative_tech', name: 'Interactive Experience', category: 'Mastery Hybrid', desc: 'Requires System Architecture AND Design Systems.', radius: 380, angle: 144 }
+  // Hybrids (Bridging space gap between clusters)
+  { id: 'hyb_game_dev', name: 'Game Design', category: 'Hybrid', desc: 'Code + Focus.', radius: 295, angle: 116, magnitude: 13 },
+  { id: 'hyb_biohack', name: 'Biohacking', category: 'Hybrid', desc: 'Fitness + Sleep.', radius: 310, angle: 348, magnitude: 13 }
 ];
 
-// Connections between nodes (Parent -> Child)
 const connections = [
-  // --- Gen 0 -> Gen 1 Connections ---
   { from: 'core', to: 'fit_1' },
   { from: 'core', to: 'code_1' },
   { from: 'core', to: 'mind_1' },
   { from: 'core', to: 'art_1' },
   { from: 'core', to: 'life_1' },
 
-  // --- Gen 1 -> Gen 2 Connections ---
-  // Fitness
   { from: 'fit_1', to: 'fit_2a' },
   { from: 'fit_1', to: 'fit_2b' },
-
-  // Code
   { from: 'code_1', to: 'code_2a' },
   { from: 'code_1', to: 'code_2b' },
-
-  // Mindset
   { from: 'mind_1', to: 'mind_2a' },
   { from: 'mind_1', to: 'mind_2b' },
-
-  // Art
   { from: 'art_1', to: 'art_2a' },
   { from: 'art_1', to: 'art_2b' },
-
-  // Life
   { from: 'life_1', to: 'life_2a' },
   { from: 'life_1', to: 'life_2b' },
 
-  // --- Gen 2 -> Gen 3 Connections ---
-  { from: 'fit_2a', to: 'fit_3' },
-  { from: 'code_2a', to: 'code_3' },
-  { from: 'mind_2a', to: 'mind_3' },
-  { from: 'art_2a', to: 'art_3' },
-  { from: 'life_2a', to: 'life_3' },
-
-  // --- Hybrid Dual-Parent Connections ---
-  
-  // Game Design Flow requires BOTH Logic & Code AND Mental Clarity
   { from: 'code_1', to: 'hyb_game_dev' },
-  { from: 'mind_1', to: 'hyb_game_dev' },
-
-  // Biohacking Routine requires BOTH Physical Vitality AND Life Balance
-  { from: 'fit_1', to: 'hyb_biohack' },
-  { from: 'life_1', to: 'hyb_biohack' },
-
-  // Interactive Experience requires BOTH System Architecture AND Design Systems
-  { from: 'code_2a', to: 'hyb_creative_tech' },
-  { from: 'art_2a', to: 'hyb_creative_tech' }
+  { from: 'mind_2a', to: 'hyb_game_dev' },
+  { from: 'fit_2a', to: 'hyb_biohack' },
+  { from: 'life_2a', to: 'hyb_biohack' }
 ];
 
 // Resize canvas dynamically
