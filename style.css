@@ -104,11 +104,12 @@ body, html {
 
 /* The container holding both the label and value */
 /* Container spacing */
+/* Ensure the container has enough room */
 .xp-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 170px; /* Prevents text crowding */
+  min-width: 180px; /* Increased from 120px/160px */
 }
 
 .xp-header {
@@ -128,10 +129,12 @@ body, html {
   letter-spacing: 0.5px;
 }
 
-.xp-value {
+/* Force #xp-display to NEVER wrap spaces */
+#xp-display, .xp-value {
   color: var(--accent-gold);
-  white-space: nowrap !important; /* Locks "0 / 100 XP" onto 1 line */
-  flex-shrink: 0;                /* Stops flexbox from squeezing width */
+  white-space: nowrap !important; /* Prevents wrapping at spaces */
+  word-break: keep-all !important;  /* Prevents breaking words */
+  flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.5px;

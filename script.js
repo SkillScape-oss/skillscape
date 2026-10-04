@@ -160,7 +160,10 @@ function isNodeMatchingSearch(node) {
 
 function updateUI() {
   levelDisplay.innerText = userState.level;
-  xpDisplay.innerText = `${userState.xp} / 100 XP`;
+  
+  // Use \u00A0 (non-breaking space) instead of normal spaces
+  xpDisplay.innerText = `${userState.xp}\u00A0/\u00A0100\u00A0XP`;
+  
   xpBarFill.style.width = `${userState.xp}%`;
 }
 
