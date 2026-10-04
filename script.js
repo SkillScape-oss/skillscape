@@ -95,7 +95,7 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// Convert Radial (radius, angle) to Cartesian (x, y)
+// Helper: Convert Radial Coordinates to Cartesian with Natural Jitter
 function getNodePosition(node) {
   const rad = (node.angle * Math.PI) / 180;
   return {
@@ -113,7 +113,7 @@ function draw() {
   ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
   ctx.scale(camera.zoom, camera.zoom);
 
-  // 1. Draw Constellation Lines
+// --- DRAW ORGANIC CURVED CONNECTIONS ---
   connections.forEach(conn => {
     const parent = nodes.find(n => n.id === conn.from);
     const child = nodes.find(n => n.id === conn.to);
@@ -122,59 +122,64 @@ function draw() {
       const pPos = getNodePosition(parent);
       const cPos = getNodePosition(child);
 
+      const isConnectedUnlocked = parent.unlocked && child.unlocked;
+      const isRelatedToSelection = selectedNode && (conn.from === selectedNode.id || conn.to === selectedNode.id);
+
+      // Midpoint with subtle perpendicular offset for organic arc curvature
+      const midX = (pPos.x + cPos.x) / 2;
+      const midY = (pPos.y + cPos.y) / 2;
+      const controlX = midX + (cPos.y - pPos.y) * 0.12;
+      const controlY = midY - (cPos.x - pPos.x) * 0.12;
+
       ctx.beginPath();
       ctx.moveTo(pPos.x, pPos.y);
-      ctx.lineTo(cPos.x, cPos.y);
-      
-      const isConnectedUnlocked = parent.unlocked && child.unlocked;
-      ctx.strokeStyle = isConnectedUnlocked ? '#00f3ff' : 'rgba(255, 255, 255, 0.15)';
-      ctx.lineWidth = isConnectedUnlocked ? 2 : 1;
-      
-      if (isConnectedUnlocked) {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#00f3ff';
+      ctx.quadraticCurveTo(controlX, controlY, cPos.x, cPos.y);
+
+      if (selectedNode) {
+        ctx.strokeStyle = isRelatedToSelection ? '#00f3ff' : 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = isRelatedToSelection ? 2.5 : 0.6;
       } else {
-        ctx.shadowBlur = 0;
+        ctx.strokeStyle = isConnectedUnlocked ? 'rgba(0, 243, 255, 0.8)' : 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = isConnectedUnlocked ? 1.8 : 0.8;
       }
-      
+
       ctx.stroke();
     }
   });
 
-  // 2. Draw Nodes
+  // --- DRAW ORGANIC STAR NODES ---
   nodes.forEach(node => {
     const pos = getNodePosition(node);
     const isSelected = selectedNode && selectedNode.id === node.id;
     const isUnlocked = userState.unlockedNodes.includes(node.id);
     node.unlocked = isUnlocked;
 
+    const baseRadius = node.magnitude || 10;
+
     ctx.beginPath();
-    const nodeRadius = node.id === 'core' ? 18 : 12;
-    ctx.arc(pos.x, pos.y, nodeRadius, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, baseRadius, 0, Math.PI * 2);
 
     if (isUnlocked) {
-      ctx.fillStyle = '#00f3ff';
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = '#00f3ff';
+      ctx.fillStyle = node.category === 'Hybrid' ? '#ffb700' : '#00f3ff';
+      ctx.shadowBlur = isSelected ? 22 : 12;
+      ctx.shadowColor = ctx.fillStyle;
     } else {
-      ctx.fillStyle = '#1c233d';
+      ctx.fillStyle = '#0f1526';
       ctx.shadowBlur = 0;
     }
 
     ctx.fill();
-    ctx.lineWidth = isSelected ? 3 : 2;
-    ctx.strokeStyle = isSelected ? '#ffb700' : (isUnlocked ? '#ffffff' : '#3a4468');
+    ctx.lineWidth = isSelected ? 2.5 : 1.5;
+    ctx.strokeStyle = isSelected ? '#ffffff' : (isUnlocked ? '#ffffff' : '#283350');
     ctx.stroke();
 
-    // Node Title Label
+    // Star Label
     ctx.shadowBlur = 0;
-    ctx.fillStyle = isUnlocked ? '#ffffff' : '#8a99ad';
-    ctx.font = '12px sans-serif';
+    ctx.fillStyle = isUnlocked ? '#ffffff' : 'rgba(255, 255, 255, 0.45)';
+    ctx.font = node.id === 'core' ? 'bold 13px sans-serif' : '11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(node.name, pos.x, pos.y + nodeRadius + 16);
+    ctx.fillText(node.name, pos.x, pos.y + baseRadius + 14);
   });
-
-  ctx.restore();
 }
 
 // Interactivity: Pan & Zoom
