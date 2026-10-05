@@ -406,6 +406,28 @@ function addXP(amount) {
   saveState();
 }
 
+// Example progression math
+function getMaxXp(level) {
+  const baseXp = 100;
+  const growthFactor = 1.25;
+  return Math.round(baseXp * Math.pow(level, growthFactor));
+}
+
+function checkLevelUp(userState) {
+  let maxXp = getMaxXp(userState.level);
+  
+  while (userState.xp >= maxXp) {
+    userState.xp -= maxXp;
+    userState.level += 1;
+    userState.sp += 1; // Award 1 SP per level
+    
+    // Trigger visual level-up modal / particle burst
+    onLevelUp(userState.level, userState.sp);
+    
+    maxXp = getMaxXp(userState.level);
+  }
+}
+
 // Reset Progress
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
