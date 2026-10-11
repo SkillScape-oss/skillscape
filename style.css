@@ -1,424 +1,306 @@
+/* ==========================================
+   1. GLOBAL VARIABLES & CSS RESET
+   ========================================== */
 :root {
-  --bg-color: #060913;
-  --panel-bg: rgba(13, 19, 36, 0.75);
-  --panel-border: rgba(255, 255, 255, 0.12);
-  --panel-glow: rgba(0, 243, 255, 0.15);
-  --accent-cyan: #00f3ff;
-  --accent-gold: #ffb700;
-  --accent-danger: #ff4757;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --bg-dark: #05070a;
+  --card-bg: #0d1117;
+  --border-color: #1f293d;
+  --text-muted: #8b949e;
+  --text-main: #c9d1d9;
+  
+  --accent-gold: #f1e05a;
+  --accent-cyan: #00f0ff;
+  
+  --node-bg: #121927;
+  --node-border: #232f48;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0; /* Remove body padding */
+  gap: 0; /* Remove layout gaps */
+  height: 100vh; /* Lock height to full viewport */
+  width: 100vw; /* Lock width to full viewport */
+  overflow: hidden; /* Prevent scrollbars */
   user-select: none;
 }
 
-body, html {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: var(--bg-color);
-  font-family: var(--font-family);
-  color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
-}
-
-#skill-canvas {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  cursor: grab;
-}
-
-#skill-canvas:active {
-  cursor: grabbing;
-}
-
-/* Header HUD Container */
-#header {
+/* ==========================================
+   2. TOP HUD (HEADS-UP DISPLAY)
+   ========================================== */
+.hud {
   position: absolute;
   top: 20px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  pointer-events: none;
-  z-index: 10;
-  gap: 16px;
-}
-
-#header > * {
-  pointer-events: auto;
-}
-
-/* User Stats Card */
-.stats-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--panel-border);
-  padding: 10px 16px;
+  gap: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 12px 24px;
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 10;
 }
 
-.level-badge {
+/* Level & Skill Point Badges */
+.level-badge, 
+.sp-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(0, 243, 255, 0.1);
-  border: 1px solid rgba(0, 243, 255, 0.3);
-  padding: 6px 12px;
+  justify-content: center;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--accent-cyan);
   border-radius: 10px;
+  padding: 6px 14px;
+  min-width: 75px;
 }
 
-.level-badge .label {
+.sp-badge {
+  background: rgba(241, 224, 90, 0.08);
+  border-color: var(--accent-gold);
+}
+
+.hud-label {
   font-size: 0.6rem;
   font-weight: 800;
+  color: var(--text-muted);
   letter-spacing: 1px;
-  color: var(--accent-cyan);
 }
 
-.level-badge .value {
-  font-size: 1.2rem;
+.hud-value {
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #fff;
-  line-height: 1;
+  color: #ffffff;
 }
 
+/* XP Progress Bar Stack */
 .xp-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 160px; /* Increased from 120px to prevent cramped text */
-}
-
-/* The container holding both the label and value */
-/* Container spacing */
-/* Ensure the container has enough room */
-.xp-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 130px;
+  min-width: 150px;
 }
 
 .xp-header {
   display: flex;
-  justify-content: flex-end; /* Aligns the XP fraction nicely to the right */
+  justify-content: flex-end;
   width: 100%;
 }
 
 .xp-value {
   color: var(--accent-gold);
-  white-space: nowrap !important; /* Ensures "0 / 100 XP" stays on one line */
-  font-size: 0.7rem;
+  white-space: nowrap !important;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
 
-
 .xp-bar-bg {
   width: 100%;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  height: 8px;
+  background: #161e2e;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .xp-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffb700, #ffe17d);
-  border-radius: 3px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Command Overlay Center Panel */
-.command-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--panel-border);
-  padding: 8px 12px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 460px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  width: 16px;
-  height: 16px;
-  color: var(--text-muted);
-  transition: color 0.2s ease;
-}
-
-#search-input {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
-  padding: 8px 36px;
-  border-radius: 10px;
-  outline: none;
-  font-size: 0.85rem;
-  font-family: var(--font-family);
-  transition: all 0.2s ease;
-}
-
-#search-input:focus {
-  border-color: var(--accent-cyan);
-  background: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-}
-
-#search-input:focus ~ .search-icon {
-  color: var(--accent-cyan);
-}
-
-.search-kbd {
-  position: absolute;
-  right: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-muted);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-family: monospace;
-  pointer-events: none;
-}
-
-.clear-btn {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.clear-btn:hover {
-  color: #fff;
-}
-
-.clear-btn.hidden {
-  display: none;
-}
-
-/* Filter Pills */
-.filter-pills {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  max-width: 100%;
-  padding-bottom: 2px;
-}
-
-.filter-pills::-webkit-scrollbar {
-  display: none;
-}
-
-.pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-muted);
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.pill.active {
-  background: rgba(0, 243, 255, 0.15);
-  color: var(--accent-cyan);
-  border-color: rgba(0, 243, 255, 0.4);
-  box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ccc;
-}
-.dot.fitness { background: #ff4757; }
-.dot.craft { background: #2ed573; }
-.dot.mindset { background: #1e90ff; }
-.dot.art { background: #ffa502; }
-.dot.habits { background: #9b59b6; }
-.dot.hybrid { background: var(--accent-gold); }
-
-/* Reset Button */
-.reset-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 71, 87, 0.12);
-  border: 1px solid rgba(255, 71, 87, 0.3);
-  color: var(--accent-danger);
-  padding: 8px 14px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--font-family);
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
-}
-
-.reset-btn:hover {
-  background: rgba(255, 71, 87, 0.25);
-  border-color: var(--accent-danger);
-  box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
-  transform: translateY(-1px);
-}
-
-/* Node Inspector Drawer Panel */
-.inspector-card {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  width: 320px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
-  padding: 22px;
-  z-index: 10;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-}
-
-.inspector-card.hidden {
-  transform: translateY(20px) scale(0.96);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.close-btn {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-.close-btn:hover {
-  color: #fff;
-}
-
-.category-tag {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--accent-cyan);
-  background: rgba(0, 243, 255, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  border: 1px solid rgba(0, 243, 255, 0.2);
-}
-
-#node-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  letter-spacing: -0.3px;
-}
-
-#node-desc {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-.unlock-status {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.status-indicator {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
   width: 0%;
-  height: 100%;
-  background: var(--accent-cyan);
+  background: linear-gradient(90deg, #e3b341, var(--accent-gold));
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-.cta-btn {
+/* ==========================================
+   3. CONSTELLATION MAP CONTAINER STACK
+   ========================================== */
+.map-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
+    #030407;
+  overflow: hidden;
+}
+
+/* Container for all pannable/zoomable elements */
+.map-world {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 12px;
-  background: var(--accent-cyan);
-  border: none;
-  border-radius: 10px;
-  color: #060913;
-  font-size: 0.85rem;
-  font-weight: 800;
-  font-family: var(--font-family);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+  height: 100%;
+  transform-origin: 0 0;
+  
+  /* Forces crisp vector/text rendering on CSS transform scaling */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-.cta-btn:hover:not(:disabled) {
-  background: #33f6ff;
-  box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
-  transform: translateY(-1px);
-}
-
-.cta-btn:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
-  box-shadow: none;
+/* Nodes that cannot be unlocked yet */
+.floating-skill.locked {
+  opacity: 0.4;
+  filter: grayscale(1);
   cursor: not-allowed;
 }
+
+/* Nodes ready to be unlocked */
+.floating-skill.available {
+  opacity: 1;
+  filter: none;
+}
+
+/* Ensure SVG lines remain crisp and vector-sharp */
+.connections-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  
+  /* Forces vector crispness across display scaling */
+  shape-rendering: geometricPrecision;
+}
+
+/* Satellite / Unlinked Node Styling */
+.floating-skill.satellite .node-circle {
+  border-style: dashed;
+  border-color: var(--accent-gold);
+  background: rgba(241, 224, 90, 0.05);
+  box-shadow: 0 0 12px rgba(241, 224, 90, 0.3);
+}
+
+.floating-skill.satellite.unlocked .node-circle {
+  border-style: solid;
+  border-color: var(--accent-gold);
+  background: var(--accent-gold);
+  box-shadow: 0 0 20px var(--accent-gold);
+}
+
+.floating-skill.satellite .skill-label {
+  color: var(--accent-gold);
+}
+
+/* Keep node circles crisp */
+.node-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--node-bg);
+  border: 2px solid var(--node-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  
+  /* Prevents border pixelation on scale */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.connection-line {
+  stroke: #161e2e;
+  stroke-width: 2;
+  transition: stroke 0.4s ease, stroke-width 0.4s ease;
+}
+
+.connection-line.active {
+  stroke: var(--accent-cyan);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+}
+
+/* Layer 2: Interactive HTML Nodes Container */
+.nodes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none; /* Keeps container transparent so SVG under it is visible */
+}
+
+#starfield-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ==========================================
+   4. FLOATING SKILL NODE STYLING & ANIMATIONS
+   ========================================== */
+.floating-skill {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  pointer-events: auto; /* Re-enables clicking on individual nodes */
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.floating-skill:hover {
+  animation-play-state: paused;
+  transform: scale(1.25);
+}
+
+.node-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--node-bg);
+  border: 2px solid var(--node-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* Unlocked Node Styling */
+.floating-skill.unlocked .node-circle {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.8);
+}
+
+/* Origin Core Star Styling */
+.floating-skill.origin .node-circle {
+  width: 38px;
+  height: 38px;
+  background: var(--accent-cyan);
+  border-color: #ffffff;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 1);
+}
+
+.skill-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.floating-skill.unlocked .skill-label {
+  color: #ffffff;
+}
+
