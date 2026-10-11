@@ -26,6 +26,7 @@ let dragStart = { x: 0, y: 0 };
 // Apply current camera state to CSS transform
 function updateCameraTransform() {
   mapWorld.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
+  checkNodeDiscovery(); // Check which nodes enter view radius
 }
 
 // 1. Mouse Dragging (Panning)
@@ -108,9 +109,9 @@ const skillTree = [
   { id: 'design', name: 'Design Systems', x: 24, y: 36, unlocked: false, spCost: 1, connections: [] },
 
   // Unlinked Satellite / Island Skills (Fixed Position)
-  { id: 'intuition', name: 'Raw Intuition', x: 20, y: 20, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
-  { id: 'resilience', name: 'Grit & Resilience', x: 82, y: 22, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
-  { id: 'flowstate', name: 'Flow Trigger', x: 80, y: 80, isSatellite: true, unlocked: false, spCost: 3, connections: [] }
+  { id: 'intuition', name: 'Raw Intuition', x: -120, y: -80, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
+  { id: 'resilience', name: 'Grit & Resilience', x: 220, y: -90, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
+  { id: 'flowstate', name: 'Flow Trigger', x: 180, y: 190, isSatellite: true, unlocked: false, spCost: 3, connections: [] }
 ];
 
 // 3. DOM References & Lookup Caches
@@ -204,6 +205,51 @@ elem.className = `floating-skill ${node.isOrigin ? 'origin' : ''} ${node.isSatel
 
     nodesLayer.appendChild(elem);
     domNodes[node.id] = elem;
+  });
+}
+
+// Keep track of discovered nodes so they stay visible once found
+const discoveredNodes = new Set(['origin']); // Origin is always discovered
+
+function checkNodeDiscovery() {
+  // Center of screen in screen pixels
+  const screenCenterX = window.innerWidth / 2;
+  const screenCenterY = window.innerHeight / 2;
+
+  // Maximum camera distance (in pixels) required to "discover" a node
+  const discoveryRadius = 350; 
+
+  skillTree.forEach(node => {
+    const elem = domNodes[node.id];
+    if (!elem) return;
+
+    // Standard connected nodes or already discovered nodes stay visible
+    if (!node.isSatellite || discoveredNodes.has(node.id) || node.unlocked) {
+      discoveredNodes.add(node.id);
+      elem.classList.remove('hidden-in-fog');
+      elem.classList.add('discovered');
+      return;
+    }
+
+    // Get live screen bounding box of the node
+    const rect = elem.getBoundingClientRect();
+    const nodeCenterX = rect.left + rect.width / 2;
+    const nodeCenterY = rect.top + rect.height / 2;
+
+    // Euclidean distance from screen center to node center
+    const dist = Math.hypot(nodeCenterX - screenCenterX, nodeCenterY - screenCenterY);
+
+    if (dist <= discoveryRadius) {
+      discoveredNodes.add(node.id);
+      elem.classList.remove('hidden-in-fog');
+      elem.classList.add('discovered');
+      
+      // Optional: Flash notification or gain bonus XP upon discovering a hidden node
+      gainXp(15);
+    } else {
+      elem.classList.add('hidden-in-fog');
+      elem.classList.remove('discovered');
+    }
   });
 }
 
@@ -367,6 +413,7 @@ updateHUD();
 initNodes();
 initSvgLines();
 syncLines();
+checkNodeDiscovery();
 
 window.addEventListener('resize', syncLines);
 window.addEventListener('resize', resizeCanvas);
