@@ -110,7 +110,7 @@ const skillTree = [
 
   // Unlinked Satellite / Island Skills (Fixed Position)
   { id: 'intuition', name: 'Raw Intuition', x: -120, y: -80, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
-  { id: 'resilience', name: 'Grit & Resilience', x: 220, y: -90, isSatellite: true, unlocked: false, spCost: 2, connections: [] },
+  { id: 'resilience', name: 'Grit & Resilience', x: 220, y: -90, isSatellite: true, unlocked: false, spCost: 1, connections: [] },
   { id: 'flowstate', name: 'Flow Trigger', x: 180, y: 190, isSatellite: true, unlocked: false, spCost: 3, connections: [] }
 ];
 
